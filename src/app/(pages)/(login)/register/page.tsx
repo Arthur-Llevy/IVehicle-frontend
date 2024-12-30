@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { register, login } from "@/services/api/vehicleApi";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowUpWideNarrow, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 export default function Register () {
     const [hasError, setHasError] = useState<boolean>(false);

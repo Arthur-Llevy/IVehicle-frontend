@@ -10,9 +10,11 @@ import { login } from "@/services/api/vehicleApi";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { useCookies } from "react-cookie";
 
 export  const Login = () => {
     const [hasError, setHasError] = useState<boolean>(false);
+    const [cookies, setCookies] = useCookies(["token"]);
 
     const formSchema = z.object({
         email: z.string().email("Por favor, digite um e-mail válido."),
@@ -31,7 +33,7 @@ export  const Login = () => {
         try {
             const result = await login(data.email, data.password);
             if ("token" in result.data && result.data) {
-               return localStorage.setItem("token", result.data.token);
+               return setCookies("token", result.data.token);
             }
         } catch (error) {
             setHasError(true);
