@@ -8,7 +8,8 @@ import { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
 
 export default function Home() {
-    const [cookies] = useCookies(["token"]);
+    const [cookies, setCookies, removeCookies] = useCookies(["token"]);
+    const [userEmail, setUserEmail] = useState<string | null>("");
     const [vehicles, setVehicles] = useState<VehicleType[]>([]);
     const [isDeleteCardVisible, setIsDeleteCardVisible] = useState<boolean>(false);
     const [idToDelete, setIdToDelete] = useState<number | null>();
@@ -29,16 +30,32 @@ export default function Home() {
                 location.reload();
             };
         } catch (error) {
-            console.error(`Falha ao excluir o veículo: ${error}`)
+            console.error(`Falha ao excluir o veículo: ${error}`);
         }
-    }
+    };
+
+    const handleLogout = () => {
+        removeCookies("token");
+        localStorage.removeItem("email");
+        location.href = "/";
+    };
 
     useEffect(() => {
        getVehicles()
+       setUserEmail(localStorage.getItem("email"));
     }, [])
 
     return (
         <div>
+            <header className="w-screen flex justify-between items-center p-16">
+                <h1 className="text-3xl text-center font-bold self-center">Lista de veículos cadsatrados</h1>
+                <div className="flex gap-3 items-center">
+                    <span>{userEmail}</span>
+                    <Button onClick={handleLogout}>
+                        Sair
+                    </Button>
+                </div>
+            </header>
             <main className="w-screen h-screen flex items-center justify-center gap-4">
                 <div className={`${isDeleteCardVisible ? " blur-sm" : ""} flex  flex-wrap items-center justify-center gap-4`}>
                     {vehicles.map(vehicle => (

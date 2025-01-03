@@ -34,6 +34,7 @@ export  const Login = () => {
             const result = await login(data.email, data.password);
             if ("token" in result.data && result.data) {
                 setCookies("token", result.data.token);
+                localStorage.setItem("email", result.data.email);
                 location.href = "/home"
             }
         } catch (error) {
