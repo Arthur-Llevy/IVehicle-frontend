@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { deleteVehicle, getAllVehicles } from "@/services/api/vehicleApi";
+import { deleteVehicle, editVehicle, getAllVehicles } from "@/services/api/vehicleApi";
 import { VehicleType } from "./types";
 import { useState, useEffect } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -20,10 +20,11 @@ export default function Home() {
     const [userEmail, setUserEmail] = useState<string | null>("");
     const [vehicles, setVehicles] = useState<VehicleType[]>([]);
     const [isDeleteCardVisible, setIsDeleteCardVisible] = useState<boolean>(false);
-    const [isCreateCardVisible, setIsCreateCardVisible] = useState<boolean>(false);
+    const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
     const [idToDelete, setIdToDelete] = useState<number | null>();
     const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
     const [popupMessage, setPopupMessage] = useState<string>("");
+    const [submitType, setSubmitType] = useState<"create" | "edit" | null>(null);
 
     const formSchema = z.object({
         name: z.string().min(3, "O nome precisa ter no mínimo 3 caracteres."),
@@ -53,11 +54,18 @@ export default function Home() {
         try {
             if (idToDelete) {
                 await deleteVehicle(cookies.token, idToDelete);
-                location.reload();
+                setIsPopupVisible(true);
+                setPopupMessage(`Veículo excuído com sucesso!`);
+                setIsFormVisible(false);
+                setIsDeleteCardVisible(previousValue => !previousValue);
+                setTimeout(() => {
+                    setIsPopupVisible(false)
+                    location.reload();
+                }, 4000);
             };
         } catch (error) {
             console.error(`Falha ao excluir o veículo: ${error}`);
-        }
+        } 
     };
 
     const handleLogout = () => {
@@ -67,24 +75,54 @@ export default function Home() {
     };
 
     const handleCreateVehicle = () => {
-        setIsCreateCardVisible(previousValue => !previousValue);
+        setSubmitType("create");
+        setIsFormVisible(previousValue => !previousValue);
     }
 
     const handleSubmit = async (data: { name: string, mark: string, year: string }) => {
-        try {
-            const result = await createVehicle(data.name, data.mark, Number(data.year));
-            if (result.status === 201) {
+        if (submitType === "create") {
+            try {
+                const result = await createVehicle(cookies.token, data.name, data.mark, Number(data.year));
+                if (result.status === 201) {
+                    setIsPopupVisible(true);
+                    setPopupMessage(`Veículo criado com sucesso!`);
+                    setIsFormVisible(false);
+                    setTimeout(() => {
+                        setIsPopupVisible(false)
+                        location.reload();
+                    }, 4000);
+                }
+            } catch (error) {
                 setIsPopupVisible(true);
-                setPopupMessage(`Veículo criado com sucesso!`);
-                setIsCreateCardVisible(false);
+                setPopupMessage(`Falha ao criar o novo veículo.`)
             }
-        } catch (error) {
-            setIsPopupVisible(true);
-            setPopupMessage(`Falha ao criar o novo veículo.`)
-        } finally {
-            setTimeout(() => setIsPopupVisible(false), 4000);
-        }
+        } else if (submitType === "edit") {
+            try {
+                const result = await editVehicle(cookies.token, Number(idToDelete), data.name, data.mark, Number(data.year));
+                if (result.status === 204) {
+                    setIsPopupVisible(true);
+                    setPopupMessage(`Veículo editado com sucesso!`);
+                    setIsFormVisible(false);
+                    setTimeout(() => {
+                        setIsPopupVisible(false)
+                        location.reload();
+                    }, 4000);
+                }
+            } catch (error) {
+                setIsPopupVisible(true);
+                setPopupMessage(`Falha ao editar o veículo.`)
+            } 
+        }        
     };
+
+    const handleEditVehicle = async (id: number, name: string, mark: string, year: number) => {
+        setIsFormVisible(true);
+        form.setValue("name", name);
+        form.setValue("mark", mark);
+        form.setValue("year", year.toString());
+        setIdToDelete(id);
+        setSubmitType("edit");
+    }
 
     useEffect(() => {
        getVehicles()
@@ -106,7 +144,7 @@ export default function Home() {
                 </div>
             </header>
             <main className="w-screen h-screen flex items-center justify-center gap-4">
-                <div className={`${isDeleteCardVisible || isCreateCardVisible ? " blur-sm" : ""} flex  flex-wrap items-center justify-center gap-4`}>
+                <div className={`${isDeleteCardVisible || isFormVisible ? " blur-sm" : ""} flex  flex-wrap items-center justify-center gap-4`}>
                     {vehicles.map(vehicle => (
                         <Card className="w-96" key={vehicle.id}>
                             <CardHeader>
@@ -115,7 +153,7 @@ export default function Home() {
                             <CardContent className="flex justify-between items-center">
                                 <p>{vehicle.marca}, {vehicle.ano}</p>
                                 <div className="flex gap-x-4">
-                                    <Button variant="edit">Editar</Button>    
+                                    <Button variant="edit" onClick={() => handleEditVehicle(vehicle.id, vehicle.nome, vehicle.marca, vehicle.ano)}>Editar</Button>    
                                     <Button variant="destructive" onClick={() => changeDeleteCardVisibility(vehicle.id)}>X</Button>    
                                 </div>
                             </CardContent>
@@ -133,7 +171,7 @@ export default function Home() {
                         </CardContent>
                     </Card>
                 )}
-                {isCreateCardVisible && (
+                {isFormVisible && (
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-4 position-absolute-center bg-white p-4">
                             <h2 className="font-bold text-2xl">Novo veículo</h2>
@@ -173,7 +211,7 @@ export default function Home() {
                                     </FormItem>
                                 )}
                             />
-                            <Button type="submit">Criar</Button>
+                            <Button type="submit">Salvar</Button>
                             <Button variant={"destructive"} onClick={handleCreateVehicle}>Cancelar</Button>
                         </form>
                     </Form>
@@ -181,7 +219,7 @@ export default function Home() {
                 {isPopupVisible && (
                     <Alert className="position-absolute-rigth-bottom-alert">
                         <Terminal className="h-4 w-4" />
-                        <AlertTitle>Ops!</AlertTitle>
+                        <AlertTitle>Mensagem</AlertTitle>
                         <AlertDescription>
                             {popupMessage}
                         </AlertDescription>

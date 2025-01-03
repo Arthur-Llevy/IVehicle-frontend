@@ -42,14 +42,26 @@ const deleteVehicle = async (token: string, id: number) => {
     return result;
 }
 
-const createVehicle = async (name: string, mark: string, year: number) => {
+const createVehicle = async (token: string, name: string, mark: string, year: number) => {
     const result = await axios.post("/veiculo", {
         marca: mark,
         ano: year,
         nome: name
+    }, {
+        headers: {"Authorization": `Bearer ${token}`}
     });
-
     return result;
 } 
 
-export { login, register, getAllVehicles, deleteVehicle, createVehicle };
+const editVehicle = async (token: string, id: number, name: string, mark: string, year: number) => {
+    const result = await axios.patch(`/veiculo/${id}`, {
+        marca: mark,
+        ano: year,
+        nome: name
+    }, {
+        headers: {"Authorization": `Bearer ${token}`}
+    });
+    return result;
+} 
+
+export { login, register, getAllVehicles, deleteVehicle, createVehicle, editVehicle };
