@@ -33,13 +33,14 @@ export  const Login = () => {
         try {
             const result = await login(data.email, data.password);
             if ("token" in result.data && result.data) {
-               return setCookies("token", result.data.token);
+                setCookies("token", result.data.token);
+                location.href = "/home"
             }
         } catch (error) {
             setHasError(true);
+        } finally {
             setTimeout(() => setHasError(false), 4000);
         }
-        
     };
 
     return (

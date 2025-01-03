@@ -1,4 +1,5 @@
 import axios from "axios";
+import { VehicleType } from "./types";
 
 axios.defaults.baseURL = "http://localhost:5277/";
 
@@ -21,4 +22,20 @@ const register = async (email: string, password: string, role: string) => {
     return result;
 };
 
-export { login, register };
+const getAllVehicles = async (token: string): Promise<VehicleType[]> => {
+    const result = await axios.get("/veiculo", {
+        headers: {"Authorization": `Bearer ${token}`}
+    });
+
+    return result.data;
+}
+
+const deleteVehicle = async (token: string, id: number) => {
+    const result = await axios.delete(`/veiculo/${id}`, {
+        headers: {"Authorization": `Bearer ${token}`}
+    });
+
+    return result;
+}
+
+export { login, register, getAllVehicles, deleteVehicle };
