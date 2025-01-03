@@ -3,6 +3,8 @@ import { VehicleType } from "./types";
 
 axios.defaults.baseURL = "http://localhost:5277/";
 
+
+// administrator
 const login = async (email: string, password: string) => {
     const result = await axios.post("/administradores/login", {
         email,
@@ -22,6 +24,8 @@ const register = async (email: string, password: string, role: string) => {
     return result;
 };
 
+
+// Vehicles
 const getAllVehicles = async (token: string): Promise<VehicleType[]> => {
     const result = await axios.get("/veiculo", {
         headers: {"Authorization": `Bearer ${token}`}
@@ -38,4 +42,14 @@ const deleteVehicle = async (token: string, id: number) => {
     return result;
 }
 
-export { login, register, getAllVehicles, deleteVehicle };
+const createVehicle = async (name: string, mark: string, year: number) => {
+    const result = await axios.post("/veiculo", {
+        marca: mark,
+        ano: year,
+        nome: name
+    });
+
+    return result;
+} 
+
+export { login, register, getAllVehicles, deleteVehicle, createVehicle };

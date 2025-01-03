@@ -5,14 +5,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteVehicle, getAllVehicles } from "@/services/api/vehicleApi";
 import { VehicleType } from "./types";
 import { useState, useEffect } from "react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useCookies } from "react-cookie";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Terminal } from "lucide-react";
+import { createVehicle } from "@/services/api/vehicleApi";
 
 export default function Home() {
     const [cookies, setCookies, removeCookies] = useCookies(["token"]);
     const [userEmail, setUserEmail] = useState<string | null>("");
     const [vehicles, setVehicles] = useState<VehicleType[]>([]);
     const [isDeleteCardVisible, setIsDeleteCardVisible] = useState<boolean>(false);
+    const [isCreateCardVisible, setIsCreateCardVisible] = useState<boolean>(false);
     const [idToDelete, setIdToDelete] = useState<number | null>();
+    const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
+    const [popupMessage, setPopupMessage] = useState<string>("");
+
+    const formSchema = z.object({
+        name: z.string().min(3, "O nome precisa ter no mínimo 3 caracteres."),
+        mark: z.string().min(3, "A marca precisa ter no mínimo 3 caracteres."),
+        year: z.string().min(4, "Digite um ano válido.")
+    });
+
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            year: "",
+            mark: "",
+            name: ""
+        }
+    });
     
     const getVehicles = async (): Promise<void> => {
         setVehicles(await getAllVehicles(cookies.token));
@@ -40,6 +66,26 @@ export default function Home() {
         location.href = "/";
     };
 
+    const handleCreateVehicle = () => {
+        setIsCreateCardVisible(previousValue => !previousValue);
+    }
+
+    const handleSubmit = async (data: { name: string, mark: string, year: string }) => {
+        try {
+            const result = await createVehicle(data.name, data.mark, Number(data.year));
+            if (result.status === 201) {
+                setIsPopupVisible(true);
+                setPopupMessage(`Veículo criado com sucesso!`);
+                setIsCreateCardVisible(false);
+            }
+        } catch (error) {
+            setIsPopupVisible(true);
+            setPopupMessage(`Falha ao criar o novo veículo.`)
+        } finally {
+            setTimeout(() => setIsPopupVisible(false), 4000);
+        }
+    };
+
     useEffect(() => {
        getVehicles()
        setUserEmail(localStorage.getItem("email"));
@@ -54,10 +100,13 @@ export default function Home() {
                     <Button onClick={handleLogout}>
                         Sair
                     </Button>
+                    <Button variant={"edit"} onClick={handleCreateVehicle}>
+                        Adicionar veículo
+                    </Button>
                 </div>
             </header>
             <main className="w-screen h-screen flex items-center justify-center gap-4">
-                <div className={`${isDeleteCardVisible ? " blur-sm" : ""} flex  flex-wrap items-center justify-center gap-4`}>
+                <div className={`${isDeleteCardVisible || isCreateCardVisible ? " blur-sm" : ""} flex  flex-wrap items-center justify-center gap-4`}>
                     {vehicles.map(vehicle => (
                         <Card className="w-96" key={vehicle.id}>
                             <CardHeader>
@@ -83,6 +132,60 @@ export default function Home() {
                             <Button variant="edit" onClick={handleDeleteVehicle}>Sim</Button>    
                         </CardContent>
                     </Card>
+                )}
+                {isCreateCardVisible && (
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-4 position-absolute-center bg-white p-4">
+                            <h2 className="font-bold text-2xl">Novo veículo</h2>
+                            <FormField 
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Nome: </FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Digite o nome do veículo" {...field} />
+                                        </FormControl>
+                                        <FormMessage>{form.formState.errors.name?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField 
+                                name="mark"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Marca: </FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Digite a marca do veículo" {...field} />
+                                        </FormControl>
+                                        <FormMessage>{form.formState.errors.mark?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField 
+                                name="year"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Ano: </FormLabel>
+                                        <FormControl>
+                                            <Input min={2000} type={"number"} {...field} />
+                                        </FormControl>
+                                        <FormMessage>{form.formState.errors.year?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit">Criar</Button>
+                            <Button variant={"destructive"} onClick={handleCreateVehicle}>Cancelar</Button>
+                        </form>
+                    </Form>
+                )}
+                {isPopupVisible && (
+                    <Alert className="position-absolute-rigth-bottom-alert">
+                        <Terminal className="h-4 w-4" />
+                        <AlertTitle>Ops!</AlertTitle>
+                        <AlertDescription>
+                            {popupMessage}
+                        </AlertDescription>
+                    </Alert>
                 )}
             </main>
         </div>

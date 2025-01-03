@@ -70,3 +70,17 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.position-absolute-center {
+  position: absolute;
+  inset: 50% 0 0 50%;
+  transform: translate(-50%, -50%);
+}
+
+.position-absolute-rigth-bottom-alert {
+  position: absolute;
+  width: 320px;
+  left: calc(99% - 320px);
+  top: calc(95% - 80px);
+  height: 80px;
+}
