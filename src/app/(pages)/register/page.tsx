@@ -6,13 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { register, login } from "@/services/api/vehicleApi";
+import { register, login } from "@/services/api/vehicleApi/administrator/";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import Link from "next/link";
+import { useCookies } from "react-cookie";
 
 export default function Register () {
     const [hasError, setHasError] = useState<boolean>(false);
+    const [, setCookies] = useCookies(["token"]);
 
     const formSchema = z.object({
         email: z.string().email("Por favor, digite um e-mail válido."),
@@ -33,9 +36,11 @@ export default function Register () {
             const handleLogin = await login(data.email, data.password);
 
             if ("token" in handleLogin.data && handleLogin.data) {
-               return localStorage.setItem("token", handleLogin.data.token);
+                setCookies("token", handleLogin.data.token);
+                localStorage.setItem("email", handleLogin.data.email);
+                location.href = "/home"
             }
-        } catch (error) {
+        } catch {
             setHasError(true);
             setTimeout(() => setHasError(false), 4000);
         }
@@ -82,6 +87,7 @@ export default function Register () {
                     </AlertDescription>
                 </Alert>
             )}
+            <p>Já possui uma conta? Clique <Link href="/"><span className="text-emerald-500 cursor-pointer">aqui</span></Link> e entre!</p>
         </div>
     );
 }

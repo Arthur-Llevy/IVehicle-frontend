@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { deleteVehicle, editVehicle, getAllVehicles } from "@/services/api/vehicleApi";
+import { deleteVehicle, editVehicle, getAllVehicles, createVehicle } from "@/services/api/vehicleApi/vechicle";
 import { VehicleType } from "./types";
 import { useState, useEffect } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,10 +13,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Terminal } from "lucide-react";
-import { createVehicle } from "@/services/api/vehicleApi";
 
 export default function Home() {
-    const [cookies, setCookies, removeCookies] = useCookies(["token"]);
+    const [cookies,, removeCookies] = useCookies(["token"]);
     const [userEmail, setUserEmail] = useState<string | null>("");
     const [vehicles, setVehicles] = useState<VehicleType[]>([]);
     const [isDeleteCardVisible, setIsDeleteCardVisible] = useState<boolean>(false);
@@ -92,7 +91,7 @@ export default function Home() {
                         location.reload();
                     }, 4000);
                 }
-            } catch (error) {
+            } catch {
                 setIsPopupVisible(true);
                 setPopupMessage(`Falha ao criar o novo veículo.`)
             }
@@ -108,7 +107,7 @@ export default function Home() {
                         location.reload();
                     }, 4000);
                 }
-            } catch (error) {
+            } catch {
                 setIsPopupVisible(true);
                 setPopupMessage(`Falha ao editar o veículo.`)
             } 
@@ -131,9 +130,9 @@ export default function Home() {
 
     return (
         <div>
-            <header className="w-screen flex justify-between items-center p-16">
+            <header className="w-screen flex flex-wrap gap-3 justify-between items-center p-16">
                 <h1 className="text-3xl text-center font-bold self-center">Lista de veículos cadsatrados</h1>
-                <div className="flex gap-3 items-center">
+                <div className="flex flex-wrap gap-3 justify-center items-center">
                     <span>{userEmail}</span>
                     <Button onClick={handleLogout}>
                         Sair
